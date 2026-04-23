@@ -45,6 +45,65 @@ if (navToggle && navMobile) {
   });
 }
 
+/* Gallery hover popups — per-brand panels */
+const galleryPopup = document.getElementById('gallery-popup');
+
+if (galleryPopup) {
+  /* Index all panels by their id suffix (e.g. "popup-gwg" → "gwg") */
+  const panels = {};
+  galleryPopup.querySelectorAll('.gwp[id]').forEach(panel => {
+    panels[panel.id.replace('popup-', '')] = panel;
+  });
+
+  let hideTimer;
+
+  const showPopup = (key) => {
+    clearTimeout(hideTimer);
+    Object.values(panels).forEach(p => { p.hidden = true; });
+    if (panels[key]) panels[key].hidden = false;
+    galleryPopup.classList.add('is-visible');
+    galleryPopup.setAttribute('aria-hidden', 'false');
+  };
+
+  const hidePopup = () => {
+    hideTimer = setTimeout(() => {
+      galleryPopup.classList.remove('is-visible');
+      galleryPopup.setAttribute('aria-hidden', 'true');
+    }, 100);
+  };
+
+  document.querySelectorAll('.gallery-item[data-popup]').forEach(item => {
+    item.addEventListener('mouseenter', () => showPopup(item.dataset.popup));
+    item.addEventListener('mouseleave', hidePopup);
+  });
+}
+
+/* Photo carousels — infinite wrapping */
+document.querySelectorAll('.csp-carousel').forEach(carousel => {
+  const track     = carousel.querySelector('.csp-carousel-track');
+  const slides    = carousel.querySelectorAll('.csp-carousel-slide');
+  const prevBtn   = carousel.querySelector('.csp-carousel-prev');
+  const nextBtn   = carousel.querySelector('.csp-carousel-next');
+  const currentEl = carousel.querySelector('.csp-carousel-current');
+  const total     = slides.length;
+  let current     = 0;
+
+  const goTo = (index) => {
+    current = ((index % total) + total) % total;
+    track.style.transform = `translateX(-${current * 100}%)`;
+    if (currentEl) currentEl.textContent = current + 1;
+  };
+
+  prevBtn?.addEventListener('click', () => goTo(current - 1));
+  nextBtn?.addEventListener('click', () => goTo(current + 1));
+
+  /* Arrow key support when the carousel region is focused */
+  carousel.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo(current - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1); }
+  });
+});
+
 /* Scroll reveal via IntersectionObserver */
 if ('IntersectionObserver' in window) {
   const observer = new IntersectionObserver((entries) => {
